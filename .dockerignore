@@ -1,0 +1,9 @@
+.git
+.gitignore
+.dockerignore
+.reports
+.vscode
+Makefile
+README.md
+scripts
+autogen/*
