@@ -17,9 +17,9 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-// @title Counter API
+// @title Alice Connect API
 // @version 1.0.0
-// @description Счетчик
+// @description Ответы на сообщения Алисы
 func main() {
 	logger := log.New(log.LevelDebug)
 	server := &http.Server{

@@ -6,6 +6,7 @@ require (
 	github.com/Impisigmatus/service_core v0.0.0-20250408101023-d9bd0eb1d97b
 	github.com/getkin/kin-openapi v0.135.0
 	github.com/go-chi/chi/v5 v5.5.0
+	github.com/json-iterator/go v1.1.12
 	github.com/rs/zerolog v1.35.1
 	github.com/swaggo/http-swagger v1.3.4
 	gopkg.in/yaml.v3 v3.0.1
@@ -19,7 +20,6 @@ require (
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

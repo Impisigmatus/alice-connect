@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/Impisigmatus/service_core/log"
 	"github.com/getkin/kin-openapi/openapi2"
 	"github.com/getkin/kin-openapi/openapi2conv"
+	"github.com/getkin/kin-openapi/openapi3"
 	"gopkg.in/yaml.v3"
 )
 
@@ -49,6 +51,7 @@ func convert(swaggerPath, readmePath string) ([]byte, error) {
 	}
 
 	result.Info.Description = string(description)
+	setTextErrorMediaTypes(result)
 	if err := result.Validate(context.Background()); err != nil {
 		return nil, err
 	}
@@ -64,6 +67,27 @@ func convert(swaggerPath, readmePath string) ([]byte, error) {
 	}
 
 	return yaml.Marshal(resultYAML)
+}
+
+// Swagger 2 задаёт produces для всей операции, а OpenAPI 3 — для каждого ответа.
+func setTextErrorMediaTypes(doc *openapi3.T) {
+	for _, path := range doc.Paths.Map() {
+		for _, operation := range path.Operations() {
+			for status, responseRef := range operation.Responses.Map() {
+				code, err := strconv.Atoi(status)
+				if err != nil || code < 400 || responseRef.Value == nil {
+					continue
+				}
+				content := responseRef.Value.Content
+				media := content["application/json"]
+				if media == nil || media.Schema == nil || media.Schema.Value == nil || !media.Schema.Value.Type.Is("string") {
+					continue
+				}
+				delete(content, "application/json")
+				content["text/plain"] = media
+			}
+		}
+	}
 }
 
 func readSwagger(swaggerPath string) (*openapi2.T, error) {
