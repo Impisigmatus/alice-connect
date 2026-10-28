@@ -7,3 +7,6 @@ Makefile
 README.md
 scripts
 autogen/*
+!autogen/oapi3.yaml
+!autogen/server/
+!autogen/server/**

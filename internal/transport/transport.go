@@ -1,12 +1,10 @@
 package transport
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Impisigmatus/alice-connect/autogen/server"
 	"github.com/Impisigmatus/service_core/log"
-	"github.com/Impisigmatus/service_core/utils"
 	"github.com/rs/zerolog"
 )
 
@@ -30,9 +28,12 @@ func NewTransport() server.ServerInterface {
 func (transport *Transport) GetApiHello(w http.ResponseWriter, r *http.Request) {
 	log, ok := r.Context().Value(log.CtxKey).(zerolog.Logger)
 	if !ok {
-		utils.WriteString(log, w, http.StatusInternalServerError, fmt.Errorf("Invalid logger"), "Невалидный логгер")
+		http.Error(w, "Невалидный логгер", http.StatusInternalServerError)
 		return
 	}
 
-	utils.WriteString(log, w, http.StatusOK, nil, "Привет от Golang!")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	if _, err := w.Write([]byte("Привет от Golang!")); err != nil {
+		log.Error().Err(err).Msg("Не удалось записать ответ")
+	}
 }
