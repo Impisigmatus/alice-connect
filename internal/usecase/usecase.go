@@ -17,7 +17,7 @@ func New() *UseCase {
 }
 
 func (*UseCase) SystemStatus() (*models.SystemStatus, error) {
-	percent, err := cpu.Percent(time.Second, false)
+	percents, err := cpu.Percent(time.Second, false)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (*UseCase) SystemStatus() (*models.SystemStatus, error) {
 	}
 
 	status := &models.SystemStatus{
-		CPUPercent:    percent[0],
+		CPUPercent:    average(percents),
 		MemoryPercent: vm.UsedPercent,
 		MemoryUsed:    vm.Used,
 		MemoryTotal:   vm.Total,
@@ -45,4 +45,17 @@ func (*UseCase) SystemStatus() (*models.SystemStatus, error) {
 	}
 
 	return status, nil
+}
+
+func average(values []float64) float64 {
+	if len(values) == 0 {
+		return -1
+	}
+
+	var sum float64
+	for _, value := range values {
+		sum += value
+	}
+
+	return sum / float64(len(values))
 }

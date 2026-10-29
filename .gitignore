@@ -1,3 +1,6 @@
 /.vscode/
 /autogen/
 /vendor/
+/.env
+/.env.*
+!/.env.example

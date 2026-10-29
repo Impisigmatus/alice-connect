@@ -4,6 +4,7 @@ go 1.26.0
 
 require (
 	github.com/Impisigmatus/service_core v0.0.0-20250408101023-d9bd0eb1d97b
+	github.com/caarlos0/env/v11 v11.4.1
 	github.com/getkin/kin-openapi v0.135.0
 	github.com/go-chi/chi/v5 v5.5.0
 	github.com/json-iterator/go v1.1.12

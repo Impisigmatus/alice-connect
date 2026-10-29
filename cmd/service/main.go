@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/Impisigmatus/alice-connect/autogen/server"
+	"github.com/Impisigmatus/alice-connect/internal/config"
 	"github.com/Impisigmatus/alice-connect/internal/transport"
 	"github.com/Impisigmatus/service_core/log"
 	"github.com/Impisigmatus/service_core/middlewares"
@@ -21,22 +22,21 @@ import (
 // @version 1.0.0
 // @description Ответы на сообщения Алисы
 func main() {
-	const (
-		aliceProtocolVersion = "1.0"
-		port                 = ":8000"
-		spec                 = "autogen/oapi3.yaml"
-		lvl                  = log.LevelDebug
-	)
+	logger := log.New(log.LevelPanic)
+	cfg, err := config.Load()
+	if err != nil {
+		logger.Panic().Err(err).Msg("Invalid config")
+	}
 
-	logger := log.New(lvl)
+	logger = log.New(cfg.LogLevel)
 	server := &http.Server{
-		Addr:    port,
-		Handler: getRouter(logger, aliceProtocolVersion, spec),
+		Addr:    cfg.Port,
+		Handler: getRouter(logger, cfg.AliceProtocolVersion, cfg.SpecPath),
 	}
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Panic().Err(err).Msg("Invalid service starting: ")
+			logger.Panic().Err(err).Msg("Invalid service starting")
 		}
 		logger.Info().Msg("Service stopped")
 	}()
@@ -53,17 +53,17 @@ func main() {
 	<-channel
 
 	if err := server.Shutdown(context.Background()); err != nil {
-		logger.Panic().Err(err).Msg("Invalid service stopping: ")
+		logger.Panic().Err(err).Msg("Invalid service stopping")
 	}
 }
 
-func getRouter(logger zerolog.Logger, aliceProtocolVersion string, spec string) *chi.Mux {
+func getRouter(logger zerolog.Logger, aliceProtocolVersion string, specPath string) *chi.Mux {
 	srv := transport.New(aliceProtocolVersion)
 
 	router := chi.NewRouter()
 	router.Get("/swagger/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
-		http.ServeFile(w, r, spec)
+		http.ServeFile(w, r, specPath)
 	})
 	router.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/openapi.yaml")))
 
