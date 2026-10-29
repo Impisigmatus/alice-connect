@@ -10,9 +10,9 @@ type Transport struct {
 	protocolVersion string
 }
 
-func New(protocolVersion string) server.ServerInterface {
+func New(protocolVersion string, usecase *usecase.UseCase) server.ServerInterface {
 	return &Transport{
-		usecase:         usecase.New(),
+		usecase:         usecase,
 		protocolVersion: protocolVersion,
 	}
 }

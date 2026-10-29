@@ -96,5 +96,8 @@ func formatSystemStatus(status *models.SystemStatus) string {
 	for _, temperature := range status.Temperatures {
 		fmt.Fprintf(&text, " Температура %s: %.0f°C;", temperature.Sensor, temperature.Celsius)
 	}
+	if serialData := strings.TrimSpace(status.SerialData); serialData != "" {
+		fmt.Fprintf(&text, " Arduino: %s", serialData)
+	}
 	return text.String()
 }

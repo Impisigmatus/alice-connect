@@ -4,19 +4,25 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Impisigmatus/alice-connect/internal/apis"
+	"github.com/Impisigmatus/alice-connect/internal/config"
 	"github.com/Impisigmatus/alice-connect/internal/models"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/mem"
 	"github.com/shirou/gopsutil/v4/sensors"
 )
 
-type UseCase struct{}
-
-func New() *UseCase {
-	return &UseCase{}
+type UseCase struct {
+	serialDriverAPI *apis.SerialDriverAPI
 }
 
-func (*UseCase) SystemStatus() (*models.SystemStatus, error) {
+func New(cfg config.SerialDriverAPIConfig) *UseCase {
+	return &UseCase{
+		serialDriverAPI: apis.NewSerialDriverAPI(cfg),
+	}
+}
+
+func (uc *UseCase) SystemStatus() (*models.SystemStatus, error) {
 	percents, err := cpu.Percent(time.Second, false)
 	if err != nil {
 		return nil, err
@@ -42,6 +48,11 @@ func (*UseCase) SystemStatus() (*models.SystemStatus, error) {
 			strings.Contains(key, "tctl") || strings.Contains(key, "package") {
 			status.Temperatures = append(status.Temperatures, models.SystemTemperature{Sensor: t.SensorKey, Celsius: t.Temperature})
 		}
+	}
+
+	status.SerialData, err = uc.serialDriverAPI.GetSerialLatest()
+	if err != nil {
+		return nil, err
 	}
 
 	return status, nil

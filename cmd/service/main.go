@@ -11,6 +11,7 @@ import (
 	"github.com/Impisigmatus/alice-connect/autogen/server"
 	"github.com/Impisigmatus/alice-connect/internal/config"
 	"github.com/Impisigmatus/alice-connect/internal/transport"
+	"github.com/Impisigmatus/alice-connect/internal/usecase"
 	"github.com/Impisigmatus/service_core/log"
 	"github.com/Impisigmatus/service_core/middlewares"
 	"github.com/go-chi/chi/v5"
@@ -31,7 +32,7 @@ func main() {
 	logger = log.New(cfg.LogLevel)
 	server := &http.Server{
 		Addr:    cfg.Port,
-		Handler: getRouter(logger, cfg.AliceProtocolVersion, cfg.SpecPath),
+		Handler: getRouter(logger, cfg),
 	}
 
 	go func() {
@@ -57,13 +58,14 @@ func main() {
 	}
 }
 
-func getRouter(logger zerolog.Logger, aliceProtocolVersion string, specPath string) *chi.Mux {
-	srv := transport.New(aliceProtocolVersion)
+func getRouter(logger zerolog.Logger, cfg config.Config) *chi.Mux {
+	usecase := usecase.New(cfg.SerialDriverAPI)
+	srv := transport.New(cfg.AliceProtocolVersion, usecase)
 
 	router := chi.NewRouter()
 	router.Get("/swagger/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
-		http.ServeFile(w, r, specPath)
+		http.ServeFile(w, r, cfg.SpecPath)
 	})
 	router.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/openapi.yaml")))
 

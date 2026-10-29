@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Impisigmatus/service_core/log"
 	"github.com/caarlos0/env/v11"
@@ -10,11 +11,20 @@ import (
 )
 
 type Config struct {
-	AliceProtocolVersion string    `env:"ALICE_PROTOCOL_VERSION" envDefault:"1.0"`
+	LogLevel             log.Level `env:"-"`
+	LogLevelStr          string    `env:"LOG_LEVEL" envDefault:"debug"`
 	Port                 string    `env:"PORT" envDefault:":8000"`
 	SpecPath             string    `env:"OPENAPI_SPEC" envDefault:"autogen/oapi3.yaml"`
-	LogLevelStr          string    `env:"LOG_LEVEL" envDefault:"debug"`
-	LogLevel             log.Level `env:"-"`
+	AliceProtocolVersion string    `env:"ALICE_PROTOCOL_VERSION" envDefault:"1.0"`
+	SerialDriverAPI      SerialDriverAPIConfig
+}
+
+type SerialDriverAPIConfig struct {
+	Hostname    string        `env:"SERIAL_DRIVER_API" envDefault:"http://serial-driver:8000"`
+	ContentType string        `env:"SERIAL_DRIVER_API_CONTENT_TYPE" envDefault:"text/plain; charset=utf-8"`
+	TimeoutInt  int           `env:"SERIAL_DRIVER_API_TIMEOUT" envDefault:"5"`
+	Timeout     time.Duration `env:"-"`
+	RetryCount  int           `env:"SERIAL_DRIVER_API_RETRY_COUNT" envDefault:"2"`
 }
 
 func Load() (Config, error) {
@@ -27,8 +37,9 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-
 	cfg.LogLevel = level
+
+	cfg.SerialDriverAPI.Timeout = time.Duration(cfg.SerialDriverAPI.TimeoutInt) * time.Second
 	return cfg, nil
 }
 

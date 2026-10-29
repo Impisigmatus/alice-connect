@@ -7,6 +7,7 @@ require (
 	github.com/caarlos0/env/v11 v11.4.1
 	github.com/getkin/kin-openapi v0.135.0
 	github.com/go-chi/chi/v5 v5.5.0
+	github.com/go-resty/resty/v2 v2.17.2
 	github.com/json-iterator/go v1.1.12
 	github.com/rs/zerolog v1.35.1
 	github.com/shirou/gopsutil/v4 v4.26.9
@@ -41,7 +42,7 @@ require (
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/woodsbury/decimal128 v1.3.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 )
