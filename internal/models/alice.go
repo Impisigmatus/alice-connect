@@ -1,4 +1,4 @@
-package transport
+package models
 
 type AliceRequest struct {
 	Meta    AliceMeta           `json:"meta"`
