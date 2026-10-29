@@ -12,9 +12,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// PostApiHello godoc
+// PostApiAliceWebhook godoc
 //
-// @Router /api/hello [post]
+// @Router /api/alice/webhook [post]
 // @Summary Ответ на сообщение Алисы
 // @Description Возвращает приветствие, загрузку ЦПУ и ОЗУ, доступную температуру и идентификаторы сессии.
 // @Accept json
@@ -26,7 +26,7 @@ import (
 // @Success 200 {object} models.AliceResponse "Ответ Алисе"
 // @Failure 400 {string} string "Некорректный JSON-запрос или запрос Алисы"
 // @Failure 500 {string} string "Не удалось обработать запрос"
-func (t *Transport) PostApiHello(w http.ResponseWriter, r *http.Request) {
+func (t *Transport) PostApiAliceWebhook(w http.ResponseWriter, r *http.Request) {
 	log, ok := r.Context().Value(log.CtxKey).(zerolog.Logger)
 	if !ok {
 		http.Error(w, "Невалидный логгер", http.StatusInternalServerError)
@@ -50,17 +50,25 @@ func (t *Transport) PostApiHello(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	status, err := t.usecase.SystemStatus()
-	if err != nil {
-		log.Error().Err(err).Msg("Не удалось получить состояние системы")
-		http.Error(w, "Не удалось обработать запрос", http.StatusInternalServerError)
-		return
+	var result string
+	command := strings.Join(strings.Fields(strings.ToLower(req.Request.Command)), " ")
+	switch command {
+	case "какая загрузка процессора", "загрузка процессора":
+		status, err := t.usecase.SystemStatus()
+		if err != nil {
+			log.Error().Err(err).Msg("Не удалось получить состояние системы")
+			http.Error(w, "Не удалось обработать запрос", http.StatusInternalServerError)
+			return
+		}
+		result = formatSystemStatus(status)
+	default:
+		result = "Привет! Go сервис на Orange Pi работает."
 	}
 
 	response := &models.AliceResponse{
 		Version: t.protocolVersion,
 		Response: models.AliceResponseBody{
-			Text:       formatSystemStatus(status),
+			Text:       result,
 			EndSession: true,
 		},
 		Session: models.AliceResponseSession{
@@ -83,7 +91,7 @@ func (t *Transport) PostApiHello(w http.ResponseWriter, r *http.Request) {
 
 func formatSystemStatus(status *models.SystemStatus) string {
 	var text strings.Builder
-	fmt.Fprintf(&text, "Привет! Go сервис на Orange Pi работает. ЦПУ: %.1f%%; ОЗУ: %.1f%% (%d из %d МБ).",
+	fmt.Fprintf(&text, "ЦПУ: %.1f%%; ОЗУ: %.1f%% (%d из %d МБ).",
 		status.CPUPercent, status.MemoryPercent, status.MemoryUsed/1024/1024, status.MemoryTotal/1024/1024)
 	for _, temperature := range status.Temperatures {
 		fmt.Fprintf(&text, " Температура %s: %.0f°C;", temperature.Sensor, temperature.Celsius)
