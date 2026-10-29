@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/Impisigmatus/alice-connect/autogen/server"
-	"github.com/Impisigmatus/alice-connect/internal/application"
 	"github.com/Impisigmatus/alice-connect/internal/transport"
 	"github.com/Impisigmatus/service_core/log"
 	"github.com/Impisigmatus/service_core/middlewares"
@@ -23,16 +22,16 @@ import (
 // @description Ответы на сообщения Алисы
 func main() {
 	const (
-		version = "1.0.0"
-		port    = ":8000"
-		spec    = "autogen/oapi3.yaml"
-		lvl     = log.LevelDebug
+		aliceProtocolVersion = "1.0"
+		port                 = ":8000"
+		spec                 = "autogen/oapi3.yaml"
+		lvl                  = log.LevelDebug
 	)
 
 	logger := log.New(lvl)
 	server := &http.Server{
 		Addr:    port,
-		Handler: getRouter(logger, version, spec),
+		Handler: getRouter(logger, aliceProtocolVersion, spec),
 	}
 
 	go func() {
@@ -58,9 +57,8 @@ func main() {
 	}
 }
 
-func getRouter(logger zerolog.Logger, version string, spec string) *chi.Mux {
-	app := application.NewApplication()
-	transport := transport.NewTransport(version, app)
+func getRouter(logger zerolog.Logger, aliceProtocolVersion string, spec string) *chi.Mux {
+	srv := transport.New(aliceProtocolVersion)
 
 	router := chi.NewRouter()
 	router.Get("/swagger/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +76,7 @@ func getRouter(logger zerolog.Logger, version string, spec string) *chi.Mux {
 	router.Handle("/api/*",
 		middlewares.Use(
 			middlewares.Use(
-				server.Handler(transport),
+				server.Handler(srv),
 				middlewares.ContextLogger()),
 			middlewares.RequestID(logger),
 		),

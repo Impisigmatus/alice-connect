@@ -1,8 +1,10 @@
 package transport
 
 import (
+	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/Impisigmatus/alice-connect/internal/models"
 	"github.com/Impisigmatus/service_core/log"
@@ -10,11 +12,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// Set godoc
+// PostApiHello godoc
 //
 // @Router /api/hello [post]
 // @Summary Ответ на сообщение Алисы
-// @Description Возвращает приветствие и идентификаторы полученной сессии.
+// @Description Возвращает приветствие, загрузку ЦПУ и ОЗУ, доступную температуру и идентификаторы сессии.
 // @Accept json
 // @Produce json
 //
@@ -24,7 +26,7 @@ import (
 // @Success 200 {object} models.AliceResponse "Ответ Алисе"
 // @Failure 400 {string} string "Некорректный JSON-запрос или запрос Алисы"
 // @Failure 500 {string} string "Не удалось обработать запрос"
-func (transport *Transport) PostApiHello(w http.ResponseWriter, r *http.Request) {
+func (t *Transport) PostApiHello(w http.ResponseWriter, r *http.Request) {
 	log, ok := r.Context().Value(log.CtxKey).(zerolog.Logger)
 	if !ok {
 		http.Error(w, "Невалидный логгер", http.StatusInternalServerError)
@@ -48,17 +50,17 @@ func (transport *Transport) PostApiHello(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	data, err := transport.app.Hello()
+	status, err := t.usecase.SystemStatus()
 	if err != nil {
-		log.Error().Err(err).Msg("Не удалось выполнить Hello")
-		http.Error(w, "Не удалось выполнить Hello", http.StatusInternalServerError)
+		log.Error().Err(err).Msg("Не удалось получить состояние системы")
+		http.Error(w, "Не удалось обработать запрос", http.StatusInternalServerError)
 		return
 	}
 
 	response := &models.AliceResponse{
-		Version: transport.version,
+		Version: t.protocolVersion,
 		Response: models.AliceResponseBody{
-			Text:       data,
+			Text:       formatSystemStatus(status),
 			EndSession: true,
 		},
 		Session: models.AliceResponseSession{
@@ -77,4 +79,14 @@ func (transport *Transport) PostApiHello(w http.ResponseWriter, r *http.Request)
 	if _, err := w.Write(responseBody); err != nil {
 		log.Error().Err(err).Msg("Не удалось записать ответ")
 	}
+}
+
+func formatSystemStatus(status *models.SystemStatus) string {
+	var text strings.Builder
+	fmt.Fprintf(&text, "Привет! Go сервис на Orange Pi работает. ЦПУ: %.1f%%; ОЗУ: %.1f%% (%d из %d МБ).",
+		status.CPUPercent, status.MemoryPercent, status.MemoryUsed/1024/1024, status.MemoryTotal/1024/1024)
+	for _, temperature := range status.Temperatures {
+		fmt.Fprintf(&text, " Температура %s: %.0f°C;", temperature.Sensor, temperature.Celsius)
+	}
+	return text.String()
 }

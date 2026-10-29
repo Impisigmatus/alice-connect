@@ -2,17 +2,17 @@ package transport
 
 import (
 	"github.com/Impisigmatus/alice-connect/autogen/server"
-	"github.com/Impisigmatus/alice-connect/internal/application"
+	"github.com/Impisigmatus/alice-connect/internal/usecase"
 )
 
 type Transport struct {
-	app     *application.Application
-	version string
+	usecase         *usecase.UseCase
+	protocolVersion string
 }
 
-func NewTransport(version string, app *application.Application) server.ServerInterface {
+func New(protocolVersion string) server.ServerInterface {
 	return &Transport{
-		app:     app,
-		version: version,
+		usecase:         usecase.New(),
+		protocolVersion: protocolVersion,
 	}
 }
