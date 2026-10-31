@@ -61,7 +61,7 @@ func (t *Transport) PostApiAliceWebhook(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		result = formatSystemStatus(status)
-	case "сожми манипулятор":
+	case "сожми манипулятор", "сжать манипулятор":
 		data, err := t.usecase.SerialCommand("TAKE")
 		if err != nil {
 			log.Error().Err(err).Msg("Не удалось сжать манипулятор")
@@ -69,7 +69,7 @@ func (t *Transport) PostApiAliceWebhook(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		result = data
-	case "разожми манипулятор":
+	case "разожми манипулятор", "разжать манипулятор":
 		data, err := t.usecase.SerialCommand("RELEASE")
 		if err != nil {
 			log.Error().Err(err).Msg("Не удалось разжать манипулятор")
