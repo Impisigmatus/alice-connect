@@ -61,6 +61,22 @@ func (t *Transport) PostApiAliceWebhook(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		result = formatSystemStatus(status)
+	case "сожми манипулятор":
+		data, err := t.usecase.SerialCommand("TAKE")
+		if err != nil {
+			log.Error().Err(err).Msg("Не удалось сжать манипулятор")
+			http.Error(w, "Не удалось выполнить команду манипулятора", http.StatusInternalServerError)
+			return
+		}
+		result = data
+	case "разожми манипулятор":
+		data, err := t.usecase.SerialCommand("RELEASE")
+		if err != nil {
+			log.Error().Err(err).Msg("Не удалось разжать манипулятор")
+			http.Error(w, "Не удалось выполнить команду манипулятора", http.StatusInternalServerError)
+			return
+		}
+		result = data
 	default:
 		result = "Привет! Go сервис на Orange Pi работает."
 	}

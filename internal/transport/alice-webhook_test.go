@@ -52,8 +52,25 @@ func TestPostApiAliceWebhookRejectsInvalidRequest(t *testing.T) {
 }
 
 func TestPostApiAliceWebhookResponse(t *testing.T) {
-	serialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte("Arduino работает"))
+	serialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/serial/latest":
+			_, _ = w.Write([]byte("Arduino работает"))
+		case "/api/serial/command":
+			if r.Method != http.MethodPost || r.Header.Get("Content-Type") != "application/json" {
+				http.Error(w, "неверный запрос", http.StatusBadRequest)
+				return
+			}
+			var command models.SerialDriverRequest
+			if err := json.NewDecoder(r.Body).Decode(&command); err != nil || (command.Data != "TAKE" && command.Data != "RELEASE") {
+				http.Error(w, "неверная команда", http.StatusBadRequest)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(models.SerialDriverResponse{Data: "OK: " + command.Data})
+		default:
+			http.NotFound(w, r)
+		}
 	}))
 	defer serialServer.Close()
 	uc := usecase.New(config.SerialDriverAPIConfig{Hostname: serialServer.URL, Timeout: 2 * time.Second})
@@ -67,6 +84,8 @@ func TestPostApiAliceWebhookResponse(t *testing.T) {
 		{name: "загрузка процессора", command: "какая загрузка процессора", want: "ЦПУ:"},
 		{name: "короткая команда", command: "загрузка процессора", want: "ЦПУ:"},
 		{name: "регистр и пробелы", command: "  Какая   ЗАГРУЗКА\tпроцессора  ", want: "ЦПУ:"},
+		{name: "сжать", command: "сожми манипулятор", want: "OK: TAKE"},
+		{name: "разжать", command: "разожми манипулятор", want: "OK: RELEASE"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			requestBody, err := json.Marshal(map[string]any{
@@ -94,5 +113,25 @@ func TestPostApiAliceWebhookResponse(t *testing.T) {
 				t.Fatalf("ответ %q не содержит %q", body.Response.Text, tc.want)
 			}
 		})
+	}
+}
+
+func TestPostApiAliceWebhookSerialCommandError(t *testing.T) {
+	serialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/serial/command" {
+			http.NotFound(w, r)
+			return
+		}
+		http.Error(w, "устройство недоступно", http.StatusServiceUnavailable)
+	}))
+	defer serialServer.Close()
+
+	uc := usecase.New(config.SerialDriverAPIConfig{Hostname: serialServer.URL, Timeout: 2 * time.Second})
+	req := httptest.NewRequest(http.MethodPost, "/api/alice/webhook", strings.NewReader(`{"request":{"command":"сожми манипулятор"},"session":{"session_id":"test-session"}}`))
+	req = req.WithContext(context.WithValue(req.Context(), log.CtxKey, zerolog.Nop()))
+	response := httptest.NewRecorder()
+	New("1.0", uc).PostApiAliceWebhook(response, req)
+	if response.Code != http.StatusInternalServerError || !strings.Contains(response.Body.String(), "Не удалось выполнить команду манипулятора") {
+		t.Fatalf("HTTP %d: %s", response.Code, response.Body.String())
 	}
 }
