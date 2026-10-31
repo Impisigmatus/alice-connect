@@ -38,11 +38,6 @@ func (uc *UseCase) SystemStatus() (*models.SystemStatus, error) {
 		}
 	}
 
-	status.SerialData, err = uc.serialDriverAPI.GetSerialLatest()
-	if err != nil {
-		return nil, err
-	}
-
 	return status, nil
 }
 

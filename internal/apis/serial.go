@@ -21,20 +21,6 @@ func NewSerialDriverAPI(cfg config.SerialDriverAPIConfig) *SerialDriverAPI {
 	}
 }
 
-func (api *SerialDriverAPI) GetSerialLatest() (string, error) {
-	const endpoint = "/api/serial/latest"
-	resp, err := api.client.R().Get(endpoint)
-	if err != nil {
-		return "", err
-	}
-
-	if resp.IsError() {
-		return "", &resty.ResponseError{Response: resp}
-	}
-
-	return resp.String(), nil
-}
-
 func (api *SerialDriverAPI) PostSerialCommand(cmd string) (string, error) {
 	const endpoint = "/api/serial/command"
 	resp, err := api.client.R().

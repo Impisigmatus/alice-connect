@@ -6,7 +6,6 @@ type SystemStatus struct {
 	MemoryUsed    uint64
 	MemoryTotal   uint64
 	Temperatures  []SystemTemperature
-	SerialData    string
 }
 
 type SystemTemperature struct {

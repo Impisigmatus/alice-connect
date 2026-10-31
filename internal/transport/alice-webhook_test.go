@@ -21,10 +21,9 @@ func TestFormatSystemStatus(t *testing.T) {
 	status := &models.SystemStatus{
 		CPUPercent: 12.5, MemoryPercent: 25, MemoryUsed: 512 << 20, MemoryTotal: 2048 << 20,
 		Temperatures: []models.SystemTemperature{{Sensor: "cpu_thermal", Celsius: 47.4}},
-		SerialData:   "Привет из Arduino! Время работы: 42 с",
 	}
 	text := formatSystemStatus(status)
-	for _, want := range []string{"ЦПУ: 12.5%", "ОЗУ: 25.0% (512 из 2048 МБ)", "Температура cpu_thermal: 47°C", "Arduino: Привет из Arduino! Время работы: 42 с"} {
+	for _, want := range []string{"ЦПУ: 12.5%", "ОЗУ: 25.0% (512 из 2048 МБ)", "Температура cpu_thermal: 47°C"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("в ответе %q нет %q", text, want)
 		}
@@ -54,8 +53,6 @@ func TestPostApiAliceWebhookRejectsInvalidRequest(t *testing.T) {
 func TestPostApiAliceWebhookResponse(t *testing.T) {
 	serialServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/api/serial/latest":
-			_, _ = w.Write([]byte("Arduino работает"))
 		case "/api/serial/command":
 			if r.Method != http.MethodPost || r.Header.Get("Content-Type") != "application/json" {
 				http.Error(w, "неверный запрос", http.StatusBadRequest)

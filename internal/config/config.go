@@ -21,7 +21,7 @@ type Config struct {
 
 type SerialDriverAPIConfig struct {
 	Hostname    string        `env:"SERIAL_DRIVER_API" envDefault:"http://serial-driver:8000"`
-	ContentType string        `env:"SERIAL_DRIVER_API_CONTENT_TYPE" envDefault:"text/plain; charset=utf-8"`
+	ContentType string        `env:"SERIAL_DRIVER_API_CONTENT_TYPE" envDefault:"application/json"`
 	TimeoutInt  int           `env:"SERIAL_DRIVER_API_TIMEOUT" envDefault:"5"`
 	Timeout     time.Duration `env:"-"`
 	RetryCount  int           `env:"SERIAL_DRIVER_API_RETRY_COUNT" envDefault:"2"`
